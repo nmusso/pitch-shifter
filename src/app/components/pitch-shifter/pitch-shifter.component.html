@@ -1,0 +1,127 @@
+<div class="pitch-shifter-container">
+
+  <!-- Header -->
+  <header>
+    <h1><lucide-icon [img]="Music" class="icon-lg"></lucide-icon> Pitch Shifter</h1>
+    <p>Adjust frequency or transpose keys directly in your browser.</p>
+  </header>
+
+  <!-- Upload Section -->
+  <div class="upload-section" *ngIf="!audioService.isLoaded()">
+    <label for="file-upload" class="drop-zone" (dragover)="onDragOver($event)" (drop)="onDrop($event)">
+      <lucide-icon [img]="Upload" class="icon-xl"></lucide-icon>
+      <span>Drag & drop or Click to Upload Audio</span>
+      <input type="file" id="file-upload" (change)="onFileSelected($event)" accept="audio/*" hidden>
+    </label>
+  </div>
+
+  <!-- Main Interface (Visible when loaded) -->
+  <main *ngIf="audioService.isLoaded()" class="controls-ui">
+
+    <!-- Player Controls -->
+    <div class="player-controls-container">
+
+      <!-- Seek Bar & Time -->
+      <div class="seek-container">
+        <input type="range" min="0" [max]="audioService.duration()" [value]="audioService.currentTime()"
+          (input)="seek($event)" class="seek-bar">
+        <div class="time-display">
+          <small>{{ audioService.currentTime() | number:'1.2-2' }}s</small>
+          <small>{{ audioService.duration() | number:'1.2-2' }}s</small>
+        </div>
+      </div>
+
+      <div class="controls-row">
+        <div class="left-controls">
+          <button class="play-btn" (click)="togglePlay()">
+            <lucide-icon [img]="audioService.isPlaying() ? Pause : Play"></lucide-icon>
+          </button>
+          <div class="track-info">
+            <span>{{ detectedKey() !== 'Unknown' ? detectedKey() : 'Track Loaded' }}</span>
+          </div>
+        </div>
+
+        <div class="right-controls">
+          <button class="bypass-btn" [class.active]="audioService.isBypassed()" (click)="audioService.toggleBypass()">
+            {{ audioService.isBypassed() ? 'BYPASSED' : 'EFFECT ON' }}
+          </button>
+
+          <!-- Quality Toggle -->
+          <div class="quality-toggle">
+            <label>
+              <input type="checkbox" [checked]="audioService.preserveTempo()" (change)="togglePreserveTempo()">
+              <span>Preserve Tempo</span>
+            </label>
+            <small *ngIf="!audioService.preserveTempo()">✨ High Fidelity (Varispeed)</small>
+            <small *ngIf="audioService.preserveTempo()">⏱️ Fixed Speed (Granular)</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mode Toggle -->
+    <div class="mode-toggle">
+      <button [class.active]="mode() === 'hz'" (click)="setMode('hz')">Hz Frequency</button>
+      <button [class.active]="mode() === 'key'" (click)="setMode('key')">Key Transpose</button>
+    </div>
+
+    <!-- Hz Mode Controls -->
+    <div class="mode-content" *ngIf="mode() === 'hz'">
+      <div class="control-group">
+        <label>Base Frequency (Hz)</label>
+        <div class="input-wrapper">
+          <input type="number" [ngModel]="baseHz()" (ngModelChange)="baseHz.set($event)">
+          <button class="icon-btn" (click)="autoDetectHz()" title="Auto-Detect">
+            <lucide-icon [img]="RefreshCcw" class="icon-sm"></lucide-icon>
+          </button>
+        </div>
+        <small>Standard: 440Hz</small>
+      </div>
+
+      <div class="divider"><lucide-icon [img]="RefreshCcw"></lucide-icon></div>
+
+      <div class="control-group">
+        <label>Target Frequency (Hz)</label>
+        <div class="input-wrapper">
+          <input type="number" [ngModel]="targetHz()" (ngModelChange)="targetHz.set($event)">
+        </div>
+        <small>Try 432Hz or 528Hz</small>
+      </div>
+    </div>
+
+    <!-- Key Mode Controls (Refactored) -->
+    <div class="mode-content keys-grid" *ngIf="mode() === 'key'">
+      <!-- Detected Key -->
+      <div class="control-group">
+        <label>Original Key</label>
+        <div class="select-wrapper">
+          <select [ngModel]="detectedKey()" (ngModelChange)="detectedKey.set($event)">
+            <option *ngFor="let key of availableKeys" [value]="key">{{ key }}</option>
+          </select>
+        </div>
+        <small>Detected automatically</small>
+      </div>
+
+      <div class="divider">-></div>
+
+      <!-- Target Key -->
+      <div class="control-group">
+        <label>Target Key</label>
+        <div class="select-wrapper">
+          <select [ngModel]="targetKey()" (ngModelChange)="targetKey.set($event)">
+            <option *ngFor="let key of availableKeys" [value]="key">{{ key }}</option>
+          </select>
+        </div>
+        <small>Transpose to...</small>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions">
+      <button class="download-btn" (click)="download()">
+        <lucide-icon [img]="Download"></lucide-icon> Download Processed
+      </button>
+    </div>
+
+  </main>
+</div>
